@@ -2,18 +2,26 @@
  * @Author: Andrew Q
  * @Date: 2022-05-14 18:06:15
  * @LastEditors: Andrew Q
- * @LastEditTime: 2022-05-14 23:07:36
- * @Description:
+ * @LastEditTime: 2022-05-15 19:41:43
+ * @Description: DrawingBoard
  */
 import { FC, MouseEvent, useEffect, useRef, useState } from 'react'
+import { useSelector } from 'react-redux'
+import { RootState } from '../../store'
+
 
 const DrawingBoard: FC = () => {
+  const { color, time } = useSelector((state: RootState) => state.color)
   const canvasRef = useRef<HTMLCanvasElement | null>(null)
 
   const contextRef = useRef<CanvasRenderingContext2D | null>(null)
 
+
+
   const [offsetX, setOffsetX] = useState(0)
   const [offsetY, setOffsetY] = useState(0)
+
+  const [isDrawing, setDrawStatus] = useState(false)
 
   useEffect(() => {
     const canvas = canvasRef.current as HTMLCanvasElement
@@ -28,27 +36,40 @@ const DrawingBoard: FC = () => {
     const context = canvas.getContext('2d') as CanvasRenderingContext2D
     context.lineCap = 'round'
     context.lineWidth = 3
-    context.strokeStyle = 'black'
+    context.strokeStyle = color
 
     contextRef.current = context
-  }, [])
+  }, [time])
+
+
+  useEffect(() => {
+    if (!contextRef.current) return
+
+    contextRef.current.strokeStyle = color
+
+  }, [color])
 
   const startDrawing = (event: MouseEvent) => {
     const { clientX, clientY } = event
-
+    setDrawStatus(true)
     contextRef.current!.beginPath()
 
     contextRef.current!.moveTo((clientX - offsetX), (clientY - offsetY))
   }
 
   const drawing = (event: MouseEvent) => {
+    if (!isDrawing) return
+
     const { clientX, clientY } = event
 
     contextRef.current!.lineTo((clientX - offsetX), (clientY - offsetY))
     contextRef.current!.stroke()
   }
 
-  const endDrawing = () => contextRef.current!.closePath()
+  const endDrawing = () => {
+    setDrawStatus(false)
+    contextRef.current!.closePath()
+  }
 
   return (
     <canvas
